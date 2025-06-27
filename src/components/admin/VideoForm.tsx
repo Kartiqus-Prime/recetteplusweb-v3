@@ -7,8 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, Video as VideoIcon } from 'lucide-react';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
-import { useSupabaseRecipes, Recipe } from '@/hooks/useSupabaseRecipes';
+import { useSupabaseRecipes } from '@/hooks/useSupabaseRecipes';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Video } from '@/hooks/useSupabaseVideos';
@@ -21,7 +20,6 @@ interface VideoFormProps {
 }
 
 const VideoForm: React.FC<VideoFormProps> = ({ video, onSubmit, onCancel, isLoading }) => {
-  const { currentUser } = useAuth();
   const { data: recipes } = useSupabaseRecipes();
   const { toast } = useToast();
   
@@ -34,8 +32,7 @@ const VideoForm: React.FC<VideoFormProps> = ({ video, onSubmit, onCancel, isLoad
     views: video?.views || 0,
     likes: video?.likes || 0,
     category: video?.category || '',
-    recipe_id: video?.recipe_id || '',
-    created_by: video?.created_by || currentUser?.id || ''
+    recipe_id: video?.recipe_id || ''
   });
   
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -54,7 +51,7 @@ const VideoForm: React.FC<VideoFormProps> = ({ video, onSubmit, onCancel, isLoad
 
   const uploadVideoToSupabase = async (file: File): Promise<string> => {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${currentUser?.id}/${Date.now()}.${fileExt}`;
+    const fileName = `${Date.now()}.${fileExt}`;
     
     const { data, error } = await supabase.storage
       .from('videos')
@@ -107,8 +104,7 @@ const VideoForm: React.FC<VideoFormProps> = ({ video, onSubmit, onCancel, isLoad
       views: Math.max(0, formData.views || 0),
       likes: Math.max(0, formData.likes || 0),
       category: formData.category.trim(),
-      recipe_id: formData.recipe_id || null,
-      created_by: formData.created_by || currentUser?.id || ''
+      recipe_id: formData.recipe_id || null
     };
 
     console.log('Submitting video data:', cleanData);

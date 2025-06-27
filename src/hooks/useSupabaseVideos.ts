@@ -13,13 +13,8 @@ export interface Video {
   duration?: string;
   views?: number;
   likes?: number;
-  created_by: string;
   recipe_id?: string;
   created_at: string;
-  profiles?: {
-    display_name?: string;
-    email?: string;
-  };
   recipes?: {
     title: string;
   };
@@ -34,7 +29,6 @@ export const useSupabaseVideos = () => {
         .from('videos')
         .select(`
           *,
-          profiles!created_by(display_name, email),
           recipes(title)
         `)
         .order('created_at', { ascending: false });

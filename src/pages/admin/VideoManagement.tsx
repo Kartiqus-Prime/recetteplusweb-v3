@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Search, Plus, Video } from 'lucide-react';
 import VideoForm from '@/components/admin/VideoForm';
@@ -11,7 +10,6 @@ import VideoTable from '@/components/admin/video/VideoTable';
 import VideoHeader from '@/components/admin/video/VideoHeader';
 import { useSupabaseVideos, useCreateSupabaseVideo, useUpdateSupabaseVideo, useDeleteSupabaseVideo, Video as VideoType } from '@/hooks/useSupabaseVideos';
 import { useCurrentUserPermissions } from '@/hooks/useAdminPermissions';
-import { useSupabaseAuthUsers } from '@/hooks/useSupabaseAuthUsers';
 
 const VideoManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,7 +18,6 @@ const VideoManagement = () => {
   
   const { data: videos = [], isLoading: videosLoading, refetch } = useSupabaseVideos();
   const { data: permissions } = useCurrentUserPermissions();
-  const { data: users = [] } = useSupabaseAuthUsers();
   
   const createVideoMutation = useCreateSupabaseVideo();
   const updateVideoMutation = useUpdateSupabaseVideo();
@@ -31,8 +28,7 @@ const VideoManagement = () => {
 
   const filteredVideos = videos?.filter(video => 
     video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    video.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    video.profiles?.display_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    video.category.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const handleCreate = async (data: Omit<VideoType, 'id' | 'created_at' | 'views' | 'likes'>) => {
@@ -127,7 +123,6 @@ const VideoManagement = () => {
       {/* Videos Table */}
       <VideoTable
         videos={filteredVideos}
-        users={users}
         onEdit={setEditingVideo}
         onDelete={handleDelete}
         isLoading={isMutating}

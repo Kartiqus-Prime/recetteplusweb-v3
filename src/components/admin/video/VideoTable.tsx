@@ -3,15 +3,13 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, Eye, Play, Clock, Users, Heart, ChefHat } from 'lucide-react';
+import { Edit, Trash2, Eye, Play, Clock, Heart, ChefHat } from 'lucide-react';
 import { Video } from '@/hooks/useSupabaseVideos';
-import { AuthUser } from '@/hooks/useSupabaseAuthUsers';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 interface VideoTableProps {
   videos: Video[];
-  users: AuthUser[];
   onEdit: (video: Video) => void;
   onDelete: (id: string, title: string) => void;
   isLoading?: boolean;
@@ -19,7 +17,6 @@ interface VideoTableProps {
 
 const VideoTable: React.FC<VideoTableProps> = ({ 
   videos, 
-  users, 
   onEdit, 
   onDelete, 
   isLoading 
@@ -101,11 +98,6 @@ const VideoTable: React.FC<VideoTableProps> = ({
 
                 {/* Metadata */}
                 <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
-                  <div className="flex items-center space-x-1">
-                    <Users className="h-4 w-4" />
-                    <span>{video.profiles?.display_name || 'Utilisateur inconnu'}</span>
-                  </div>
-                  
                   <Badge variant="outline">{video.category}</Badge>
                   
                   {video.duration && (
