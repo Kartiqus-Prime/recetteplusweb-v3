@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useCurrentUserPermissions } from '@/hooks/useAdminPermissions';
 import { Navigate, Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Shield, Users, Book, Package, Video, BarChart3, ArrowLeft, Settings } from 'lucide-react';
+import AccessDenied from '@/components/AccessDenied';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -12,12 +12,13 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { currentUser, loading: authLoading } = useAuth();
-  const { data: permissions, isLoading: permissionsLoading } = useCurrentUserPermissions();
+  const { data: permissions, isLoading: permissionsLoading, error: permissionsError } = useCurrentUserPermissions();
   const location = useLocation();
 
   console.log('AdminLayout - currentUser:', currentUser?.id);
   console.log('AdminLayout - permissions:', permissions);
   console.log('AdminLayout - authLoading:', authLoading, 'permissionsLoading:', permissionsLoading);
+  console.log('AdminLayout - permissions error:', permissionsError);
 
   if (authLoading || permissionsLoading) {
     return (
@@ -33,8 +34,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   }
 
   if (!permissions) {
-    console.log('AdminLayout - User has no admin permissions, redirecting to home');
-    return <Navigate to="/" replace />;
+    console.log('AdminLayout - User has no admin permissions, showing access denied');
+    return (
+      <AccessDenied 
+        title="Accès administrateur refusé"
+        message="Vous n'avez pas les permissions d'administrateur nécessaires pour accéder à cette section."
+        showBackButton={true}
+      />
+    );
   }
 
   const hasAnyPermission = permissions.is_super_admin || 
@@ -46,8 +53,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     permissions.can_manage_orders;
 
   if (!hasAnyPermission) {
-    console.log('AdminLayout - User has no valid permissions, redirecting to home');
-    return <Navigate to="/" replace />;
+    console.log('AdminLayout - User has no valid permissions, showing access denied');
+    return (
+      <AccessDenied 
+        title="Permissions insuffisantes"
+        message="Vos permissions d'administrateur ne vous permettent pas d'accéder à cette section."
+        showBackButton={true}
+      />
+    );
   }
 
   const menuItems = [

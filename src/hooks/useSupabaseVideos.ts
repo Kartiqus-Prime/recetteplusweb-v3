@@ -1,38 +1,40 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Video {
   id: string;
   title: string;
-  description: string | null;
-  video_url: string | null;
-  thumbnail: string | null;
-  duration: string | null;
-  views: number | null;
-  likes: number | null;
+  description?: string;
+  video_url?: string;
+  thumbnail?: string;
   category: string;
-  recipe_id: string | null;
-  created_at: string;
+  duration?: string;
+  views?: number;
+  likes?: number;
   created_by: string;
+  recipe_id?: string;
+  created_at: string;
   profiles?: {
-    display_name: string | null;
-    email: string | null;
-  } | null;
+    display_name?: string;
+    email?: string;
+  };
   recipes?: {
     title: string;
-  } | null;
+  };
 }
 
 export const useSupabaseVideos = () => {
   return useQuery({
-    queryKey: ['videos'],
+    queryKey: ['supabase-videos'],
     queryFn: async () => {
       console.log('Fetching videos from Supabase...');
       const { data, error } = await supabase
         .from('videos')
         .select(`
           *,
-          profiles(display_name, email),
+          profiles!created_by(display_name, email),
           recipes(title)
         `)
         .order('created_at', { ascending: false });
@@ -42,34 +44,22 @@ export const useSupabaseVideos = () => {
         throw error;
       }
 
-      // Filtrer et nettoyer les données pour gérer les erreurs de jointure
-      const cleanedData = data?.map(video => ({
-        ...video,
-        profiles: video.profiles && typeof video.profiles === 'object' && !('error' in video.profiles) 
-          ? video.profiles 
-          : null,
-        recipes: video.recipes && typeof video.recipes === 'object' && !('error' in video.recipes)
-          ? video.recipes
-          : null
-      })) || [];
-
-      return cleanedData as Video[];
+      console.log('Videos fetched successfully:', data?.length);
+      return data as Video[];
     },
+    staleTime: 5 * 60 * 1000,
   });
 };
 
 export const useCreateSupabaseVideo = () => {
   const queryClient = useQueryClient();
-  
+  const { toast } = useToast();
+
   return useMutation({
     mutationFn: async (video: Omit<Video, 'id' | 'created_at' | 'views' | 'likes'>) => {
       const { data, error } = await supabase
         .from('videos')
-        .insert([{
-          ...video,
-          views: 0,
-          likes: 0
-        }])
+        .insert([video])
         .select()
         .single();
 
@@ -77,14 +67,27 @@ export const useCreateSupabaseVideo = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['videos'] });
+      queryClient.invalidateQueries({ queryKey: ['supabase-videos'] });
+      toast({
+        title: "Vidéo créée",
+        description: "La vidéo a été créée avec succès",
+      });
+    },
+    onError: (error) => {
+      console.error('Error creating video:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer la vidéo",
+        variant: "destructive",
+      });
     },
   });
 };
 
 export const useUpdateSupabaseVideo = () => {
   const queryClient = useQueryClient();
-  
+  const { toast } = useToast();
+
   return useMutation({
     mutationFn: async ({ id, ...video }: Partial<Video> & { id: string }) => {
       const { data, error } = await supabase
@@ -98,14 +101,27 @@ export const useUpdateSupabaseVideo = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['videos'] });
+      queryClient.invalidateQueries({ queryKey: ['supabase-videos'] });
+      toast({
+        title: "Vidéo modifiée",
+        description: "La vidéo a été modifiée avec succès",
+      });
+    },
+    onError: (error) => {
+      console.error('Error updating video:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier la vidéo",
+        variant: "destructive",
+      });
     },
   });
 };
 
 export const useDeleteSupabaseVideo = () => {
   const queryClient = useQueryClient();
-  
+  const { toast } = useToast();
+
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -116,7 +132,20 @@ export const useDeleteSupabaseVideo = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['videos'] });
+      queryClient.invalidateQueries({ queryKey: ['supabase-videos'] });
+      toast({
+        title: "Vidéo supprimée",
+        description: "La vidéo a été supprimée avec succès",
+        variant: "destructive",
+      });
+    },
+    onError: (error) => {
+      console.error('Error deleting video:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer la vidéo",
+        variant: "destructive",
+      });
     },
   });
 };
