@@ -23,7 +23,8 @@ const VideoManagement = () => {
   const updateVideoMutation = useUpdateSupabaseVideo();
   const deleteVideoMutation = useDeleteSupabaseVideo();
 
-  // Vérifier les permissions
+  // Vérifier les permissions - avec les 3 droits d'accès possibles
+  const canViewVideos = permissions?.can_manage_videos || permissions?.can_manage_recipes || permissions?.can_manage_products || permissions?.is_super_admin;
   const canManageVideos = permissions?.can_manage_videos || permissions?.is_super_admin;
 
   const filteredVideos = videos?.filter(video => 
@@ -74,7 +75,7 @@ const VideoManagement = () => {
   const isLoading = videosLoading;
   const isMutating = createVideoMutation.isPending || updateVideoMutation.isPending || deleteVideoMutation.isPending;
 
-  if (!canManageVideos) {
+  if (!canViewVideos) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -83,7 +84,7 @@ const VideoManagement = () => {
             Accès refusé
           </h3>
           <p className="text-gray-500">
-            Vous n'avez pas les permissions nécessaires pour gérer les vidéos.
+            Vous n'avez pas les permissions nécessaires pour accéder à cette section.
           </p>
         </div>
       </div>
@@ -101,7 +102,7 @@ const VideoManagement = () => {
   return (
     <div className="space-y-6">
       <VideoHeader 
-        onAddVideo={() => setShowForm(true)}
+        onAddVideo={canManageVideos ? () => setShowForm(true) : undefined}
         videoCount={videos.length}
       />
 
@@ -123,41 +124,45 @@ const VideoManagement = () => {
       {/* Videos Table */}
       <VideoTable
         videos={filteredVideos}
-        onEdit={setEditingVideo}
-        onDelete={handleDelete}
+        onEdit={canManageVideos ? setEditingVideo : undefined}
+        onDelete={canManageVideos ? handleDelete : undefined}
         isLoading={isMutating}
       />
 
       {/* Create Form Dialog */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Ajouter une vidéo</DialogTitle>
-          </DialogHeader>
-          <VideoForm
-            onSubmit={handleCreate}
-            onCancel={() => setShowForm(false)}
-            isLoading={createVideoMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
+      {canManageVideos && (
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Ajouter une vidéo</DialogTitle>
+            </DialogHeader>
+            <VideoForm
+              onSubmit={handleCreate}
+              onCancel={() => setShowForm(false)}
+              isLoading={createVideoMutation.isPending}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Edit Form Dialog */}
-      <Dialog open={!!editingVideo} onOpenChange={() => setEditingVideo(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Modifier la vidéo</DialogTitle>
-          </DialogHeader>
-          {editingVideo && (
-            <VideoForm
-              video={editingVideo}
-              onSubmit={handleUpdate}
-              onCancel={() => setEditingVideo(null)}
-              isLoading={updateVideoMutation.isPending}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {canManageVideos && (
+        <Dialog open={!!editingVideo} onOpenChange={() => setEditingVideo(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Modifier la vidéo</DialogTitle>
+            </DialogHeader>
+            {editingVideo && (
+              <VideoForm
+                video={editingVideo}
+                onSubmit={handleUpdate}
+                onCancel={() => setEditingVideo(null)}
+                isLoading={updateVideoMutation.isPending}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, Search, Book, Package, Video, Trash2, Loader2 } from 'lucide-react';
+import { Heart, Search, Book, Package, Video, Trash2, Loader2, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseFavorites } from '@/hooks/useSupabaseFavorites';
 import { useSupabaseRecipes } from '@/hooks/useSupabaseRecipes';
 import { useSupabaseProducts } from '@/hooks/useSupabaseProducts';
 import { useSupabaseVideos } from '@/hooks/useSupabaseVideos';
+import { usePersonalCart } from '@/hooks/useSupabaseCart';
 
 const Favorites = () => {
   const { currentUser } = useAuth();
@@ -20,6 +21,7 @@ const Favorites = () => {
   const { data: recipes = [] } = useSupabaseRecipes();
   const { data: products = [] } = useSupabaseProducts();
   const { data: videos = [] } = useSupabaseVideos();
+  const { addToPersonalCart } = usePersonalCart();
 
   if (!currentUser) {
     return (
@@ -70,6 +72,10 @@ const Favorites = () => {
 
   const handleRemoveFavorite = (itemId: string, type: 'recipe' | 'product' | 'video') => {
     removeFavorite({ itemId, type });
+  };
+
+  const handleAddToCart = (productId: string) => {
+    addToPersonalCart({ productId, quantity: 1 });
   };
 
   if (isLoading) {
@@ -163,11 +169,18 @@ const Favorites = () => {
                       <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">
                         {recipe.description?.slice(0, 100) || 'Pas de description'}...
                       </p>
-                      <div className="flex justify-between items-center text-xs sm:text-sm text-gray-500">
+                      <div className="flex justify-between items-center text-xs sm:text-sm text-gray-500 mb-3">
                         <span>{recipe.cook_time} min</span>
                         <span>{recipe.servings} pers.</span>
                         <span>{recipe.difficulty || 'Moyen'}</span>
                       </div>
+                      <Button
+                        onClick={() => navigate(`/recettes/${recipe.id}`)}
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                        size="sm"
+                      >
+                        Voir la recette
+                      </Button>
                     </CardContent>
                   </Card>
                 ))}
@@ -216,7 +229,15 @@ const Favorites = () => {
                       <p className="text-orange-500 font-bold mb-2 text-sm sm:text-base">
                         {product.price}€ / {product.unit}
                       </p>
-                      <p className="text-xs sm:text-sm text-gray-600">{product.category}</p>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-3">{product.category}</p>
+                      <Button
+                        onClick={() => handleAddToCart(product.id)}
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                        size="sm"
+                      >
+                        <ShoppingCart className="h-4 w-4 mr-2" />
+                        Ajouter au panier
+                      </Button>
                     </CardContent>
                   </Card>
                 ))}
@@ -268,10 +289,17 @@ const Favorites = () => {
                       <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">
                         {video.description?.slice(0, 100) || 'Pas de description'}...
                       </p>
-                      <div className="flex justify-between items-center text-xs sm:text-sm text-gray-500">
+                      <div className="flex justify-between items-center text-xs sm:text-sm text-gray-500 mb-3">
                         <span>{(video.views || 0).toLocaleString()} vues</span>
                         <span>{(video.likes || 0).toLocaleString()} likes</span>
                       </div>
+                      <Button
+                        onClick={() => navigate(`/videos/${video.id}`)}
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                        size="sm"
+                      >
+                        Regarder
+                      </Button>
                     </CardContent>
                   </Card>
                 ))}

@@ -10,8 +10,8 @@ import { fr } from 'date-fns/locale';
 
 interface VideoTableProps {
   videos: Video[];
-  onEdit: (video: Video) => void;
-  onDelete: (id: string, title: string) => void;
+  onEdit?: (video: Video) => void;
+  onDelete?: (id: string, title: string) => void;
   isLoading?: boolean;
 }
 
@@ -30,7 +30,7 @@ const VideoTable: React.FC<VideoTableProps> = ({
             Aucune vidéo trouvée
           </h3>
           <p className="text-gray-500">
-            Commencez par ajouter votre première vidéo.
+            {onEdit ? 'Commencez par ajouter votre première vidéo.' : 'Aucune vidéo disponible.'}
           </p>
         </CardContent>
       </Card>
@@ -73,27 +73,33 @@ const VideoTable: React.FC<VideoTableProps> = ({
                     </p>
                   </div>
                   
-                  <div className="flex items-center space-x-2 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(video)}
-                      disabled={isLoading}
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Modifier
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onDelete(video.id, video.title)}
-                      disabled={isLoading}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Supprimer
-                    </Button>
-                  </div>
+                  {(onEdit || onDelete) && (
+                    <div className="flex items-center space-x-2 ml-4">
+                      {onEdit && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onEdit(video)}
+                          disabled={isLoading}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Modifier
+                        </Button>
+                      )}
+                      {onDelete && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onDelete(video.id, video.title)}
+                          disabled={isLoading}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Supprimer
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Metadata */}
