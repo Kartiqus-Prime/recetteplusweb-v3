@@ -62,21 +62,22 @@ const MainCartView = () => {
   if (allCarts.length === 0) {
     return (
       <Card>
-        <CardContent className="pt-12 pb-12">
+        <CardContent className="pt-8 pb-8 sm:pt-12 sm:pb-12">
           <div className="text-center">
-            <ShoppingCart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Votre panier est vide</h3>
-            <p className="text-gray-600 mb-6">Ajoutez des produits ou créez des paniers recette pour commencer</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <ShoppingCart className="h-12 w-12 sm:h-16 sm:w-16 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Votre panier est vide</h3>
+            <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-4">Ajoutez des produits ou créez des paniers recette pour commencer</p>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
               <Button 
                 onClick={() => navigate('/produits')}
-                className="bg-orange-500 hover:bg-orange-600"
+                className="bg-orange-500 hover:bg-orange-600 w-full sm:w-auto"
               >
                 Voir les produits
               </Button>
               <Button 
                 onClick={() => navigate('/recettes')}
                 variant="outline"
+                className="w-full sm:w-auto"
               >
                 Voir les recettes
               </Button>
@@ -88,74 +89,78 @@ const MainCartView = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <ShoppingCart className="h-5 w-5 mr-2" />
-            Mes Paniers ({allCarts.length} panier{allCarts.length > 1 ? 's' : ''})
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center text-lg sm:text-xl">
+            <ShoppingCart className="h-5 w-5 mr-2 flex-shrink-0" />
+            <span className="truncate">Mes Paniers ({allCarts.length} panier{allCarts.length > 1 ? 's' : ''})</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4">
           {allCarts.map((cart) => (
-            <div key={cart.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg bg-gray-50 gap-4">
-              <div className="flex items-center space-x-4 flex-1">
-                <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg flex-shrink-0">
-                  {cart.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium truncate">{cart.name}</h3>
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
-                    <Badge variant="outline" className="text-xs">
-                      {cart.type === 'personal' ? 'Personnel' : 'Recette'}
-                    </Badge>
-                    <span className="text-sm text-gray-500">
-                      {cart.itemsCount} article{cart.itemsCount > 1 ? 's' : ''}
-                    </span>
+            <div key={cart.id} className="border rounded-lg bg-gray-50 overflow-hidden">
+              <div className="p-3 sm:p-4">
+                <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
+                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex-shrink-0">
+                      {cart.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-sm sm:text-base truncate pr-2">{cart.name}</h3>
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          {cart.type === 'personal' ? 'Personnel' : 'Recette'}
+                        </Badge>
+                        <span className="text-xs sm:text-sm text-gray-500">
+                          {cart.itemsCount} article{cart.itemsCount > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <p className="text-orange-500 font-semibold mt-1 text-sm sm:text-base">
+                        {formatPrice(cart.total)}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-orange-500 font-semibold mt-1">
-                    {formatPrice(cart.total)}
-                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleViewCartDetail(cart.type, cart.id)}
+                    className="w-full sm:w-auto mt-2 sm:mt-0 text-xs sm:text-sm"
+                  >
+                    Voir le détail
+                  </Button>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleViewCartDetail(cart.type, cart.id)}
-                className="w-full sm:w-auto"
-              >
-                Voir le détail
-              </Button>
             </div>
           ))}
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Résumé de commande</CardTitle>
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="text-lg sm:text-xl">Résumé de commande</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4">
           <div className="space-y-2">
-            <div className="flex justify-between">
+            <div className="flex justify-between text-sm sm:text-base">
               <span>Sous-total</span>
-              <span>{formatPrice(totalAmount)}</span>
+              <span className="font-medium">{formatPrice(totalAmount)}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between text-sm sm:text-base">
               <span>Livraison</span>
-              <span className="text-green-600">Gratuite</span>
+              <span className="text-green-600 font-medium">Gratuite</span>
             </div>
           </div>
           
           <Separator />
           
-          <div className="flex justify-between font-semibold text-lg">
+          <div className="flex justify-between font-semibold text-base sm:text-lg">
             <span>Total</span>
-            <span>{formatPrice(totalAmount)}</span>
+            <span className="text-orange-500">{formatPrice(totalAmount)}</span>
           </div>
 
           <Button 
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white text-sm sm:text-base py-2 sm:py-3"
             disabled={totalAmount === 0}
           >
             <CreditCard className="h-4 w-4 mr-2" />

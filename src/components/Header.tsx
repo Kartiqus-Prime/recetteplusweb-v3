@@ -32,6 +32,7 @@ const Header = () => {
   const { cartItems } = useMainCart();
   const isMobile = useIsMobile();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -41,6 +42,15 @@ const Header = () => {
       navigate('/');
     } catch (error) {
       console.error('Erreur de déconnexion:', error);
+    }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/produits?search=${encodeURIComponent(searchTerm.trim())}`);
+      setSearchTerm('');
+      setIsMenuOpen(false);
     }
   };
 
@@ -81,17 +91,6 @@ const Header = () => {
       >
         Vidéos
       </Link>
-      <Link 
-        to="/favorites" 
-        className={cn(
-          "text-sm font-medium transition-colors hover:text-orange-500",
-          isActive("/favorites") ? "text-orange-500" : "text-gray-600",
-          mobile && "block py-2 text-base"
-        )}
-        onClick={onLinkClick}
-      >
-        Favoris
-      </Link>
     </>
   );
   
@@ -104,7 +103,7 @@ const Header = () => {
             <img 
               src="/lovable-uploads/fd4068e4-5395-416a-a0d9-2f2084813da4.png" 
               alt="Recette+" 
-              className="h-12 w-auto"
+              className="h-8 sm:h-12 w-auto"
             />
           </Link>
 
@@ -115,23 +114,25 @@ const Header = () => {
 
           {/* Search Bar - Hidden on mobile */}
           <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-            <div className="relative w-full">
+            <form onSubmit={handleSearch} className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input 
                 placeholder="Rechercher des recettes, produits..." 
                 className="pl-10 pr-4 bg-gray-50 border-gray-200 focus:bg-white"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
-            </div>
+            </form>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             {/* Favorites - Desktop only */}
             <Button 
               variant="ghost" 
               size="icon" 
               className="hidden md:flex"
-              onClick={() => navigate('/favorites')}
+              onClick={() => navigate('/favoris')}
             >
               <Heart className="h-5 w-5" />
             </Button>
@@ -183,7 +184,7 @@ const Header = () => {
                     <ShoppingCart className="mr-2 h-4 w-4" />
                     <span>Mon panier</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/favorites')} className="md:hidden">
+                  <DropdownMenuItem onClick={() => navigate('/favoris')} className="md:hidden">
                     <Heart className="mr-2 h-4 w-4" />
                     <span>Mes favoris</span>
                   </DropdownMenuItem>
@@ -201,7 +202,7 @@ const Header = () => {
                 </Button>
                 <Button 
                   onClick={() => navigate('/login')}
-                  className="bg-orange-500 hover:bg-orange-600 text-white hidden sm:inline-flex"
+                  className="bg-orange-500 hover:bg-orange-600 text-white hidden sm:inline-flex text-sm px-3 py-2"
                 >
                   Connexion
                 </Button>
@@ -221,13 +222,15 @@ const Header = () => {
                 </SheetHeader>
                 <div className="flex flex-col space-y-4 mt-6">
                   {/* Search on mobile */}
-                  <div className="relative w-full md:hidden">
+                  <form onSubmit={handleSearch} className="relative w-full md:hidden">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input 
                       placeholder="Rechercher..." 
                       className="pl-10 pr-4"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                  </div>
+                  </form>
                   
                   {/* Navigation Links */}
                   <nav className="flex flex-col space-y-2">
