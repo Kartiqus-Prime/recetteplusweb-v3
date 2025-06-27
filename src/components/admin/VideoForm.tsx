@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Video as VideoIcon } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Upload, Video as VideoIcon, CheckCircle } from 'lucide-react';
 import { useSupabaseRecipes } from '@/hooks/useSupabaseRecipes';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -37,15 +38,28 @@ const VideoForm: React.FC<VideoFormProps> = ({ video, onSubmit, onCancel, isLoad
   
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [videoPreview, setVideoPreview] = useState<string>('');
+  const [uploadComplete, setUploadComplete] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Vérifier la taille du fichier (max 100MB)
+      if (file.size > 100 * 1024 * 1024) {
+        toast({
+          title: "Fichier trop volumineux",
+          description: "La vidéo ne doit pas dépasser 100MB",
+          variant: "destructive"
+        });
+        return;
+      }
+
       setVideoFile(file);
       // Créer une URL de prévisualisation
       const url = URL.createObjectURL(file);
       setVideoPreview(url);
+      setUploadComplete(false);
     }
   };
 
@@ -53,19 +67,40 @@ const VideoForm: React.FC<VideoFormProps> = ({ video, onSubmit, onCancel, isLoad
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}.${fileExt}`;
     
-    const { data, error } = await supabase.storage
-      .from('videos')
-      .upload(fileName, file);
+    // Simuler le progrès de l'upload
+    setUploadProgress(0);
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 200);
 
-    if (error) {
+    try {
+      const { data, error } = await supabase.storage
+        .from('videos')
+        .upload(fileName, file);
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (error) {
+        throw error;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('videos')
+        .getPublicUrl(data.path);
+
+      setUploadComplete(true);
+      return publicUrl;
+    } catch (error) {
+      clearInterval(progressInterval);
       throw error;
     }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('videos')
-      .getPublicUrl(data.path);
-
-    return publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -155,12 +190,12 @@ const VideoForm: React.FC<VideoFormProps> = ({ video, onSubmit, onCancel, isLoad
 
           <div>
             <Label htmlFor="recipe_id">Recette associée (optionnel)</Label>
-            <Select value={formData.recipe_id} onValueChange={(value) => setFormData({...formData, recipe_id: value})}>
+            <Select value={formData.recipe_id} onValueChange={(value) => setFormData({...formData, recipe_id: value === 'none' ? '' : value})}>
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner une recette" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Aucune recette</SelectItem>
+                <SelectItem value="none">Aucune recette</SelectItem>
                 {recipes?.map((recipe) => (
                   <SelectItem key={recipe.id} value={recipe.id}>
                     {recipe.title}
@@ -176,7 +211,11 @@ const VideoForm: React.FC<VideoFormProps> = ({ video, onSubmit, onCancel, isLoad
               <div className="flex items-center justify-center w-full">
                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                    {uploadComplete ? (
+                      <CheckCircle className="w-8 h-8 mb-4 text-green-500" />
+                    ) : (
+                      <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                    )}
                     <p className="mb-2 text-sm text-gray-500">
                       <span className="font-semibold">Cliquer pour uploader</span> ou glisser-déposer
                     </p>
@@ -188,13 +227,32 @@ const VideoForm: React.FC<VideoFormProps> = ({ video, onSubmit, onCancel, isLoad
                     className="hidden"
                     accept="video/*"
                     onChange={handleFileChange}
+                    disabled={uploading}
                   />
                 </label>
               </div>
+              
               {videoFile && (
-                <p className="mt-2 text-sm text-green-600">
-                  Fichier sélectionné: {videoFile.name}
-                </p>
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-green-600">
+                      Fichier sélectionné: {videoFile.name}
+                    </p>
+                    {uploadComplete && (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    )}
+                  </div>
+                  
+                  {uploading && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Upload en cours...</span>
+                        <span>{uploadProgress}%</span>
+                      </div>
+                      <Progress value={uploadProgress} className="w-full" />
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -205,7 +263,7 @@ const VideoForm: React.FC<VideoFormProps> = ({ video, onSubmit, onCancel, isLoad
               <video
                 src={videoPreview}
                 controls
-                className="w-full max-w-md h-48 rounded-lg border"
+                className="w-full max-w-md h-48 rounded-lg border mt-2"
               />
             </div>
           )}
@@ -251,7 +309,7 @@ const VideoForm: React.FC<VideoFormProps> = ({ video, onSubmit, onCancel, isLoad
           </div>
 
           <div className="flex justify-end space-x-4">
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={uploading}>
               Annuler
             </Button>
             <Button type="submit" disabled={isLoading || uploading}>
