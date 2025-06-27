@@ -7,10 +7,12 @@ import { Separator } from '@/components/ui/separator';
 import { ShoppingCart, Package, ChefHat, User, CreditCard } from 'lucide-react';
 import { usePersonalCart, useRecipeUserCarts } from '@/hooks/useSupabaseCart';
 import { formatPrice } from '@/lib/firestore';
+import { useNavigate } from 'react-router-dom';
 
 const MainCartView = () => {
   const { personalCart, personalCartItems } = usePersonalCart();
   const { recipeCarts } = useRecipeUserCarts();
+  const navigate = useNavigate();
 
   const personalCartTotal = personalCartItems.reduce((sum, item) => 
     sum + ((item.products?.price || 0) * item.quantity), 0
@@ -42,6 +44,14 @@ const MainCartView = () => {
     }))
   ];
 
+  const handleViewCartDetail = (cartType: string, cartId: string) => {
+    if (cartType === 'personal') {
+      navigate('/panier?tab=personal');
+    } else if (cartType === 'recipe') {
+      navigate('/panier?tab=recipe');
+    }
+  };
+
   if (allCarts.length === 0) {
     return (
       <Card>
@@ -52,13 +62,13 @@ const MainCartView = () => {
             <p className="text-gray-600 mb-6">Ajoutez des produits ou créez des paniers recette pour commencer</p>
             <div className="flex gap-4 justify-center">
               <Button 
-                onClick={() => window.location.href = '/produits'}
+                onClick={() => navigate('/produits')}
                 className="bg-orange-500 hover:bg-orange-600"
               >
                 Voir les produits
               </Button>
               <Button 
-                onClick={() => window.location.href = '/recettes'}
+                onClick={() => navigate('/recettes')}
                 variant="outline"
               >
                 Voir les recettes
@@ -104,13 +114,7 @@ const MainCartView = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  if (cart.type === 'personal') {
-                    window.location.href = '/panier?tab=personal';
-                  } else {
-                    window.location.href = '/panier?tab=recipe';
-                  }
-                }}
+                onClick={() => handleViewCartDetail(cart.type, cart.id)}
               >
                 Voir le détail
               </Button>
