@@ -7,12 +7,13 @@ import { Separator } from '@/components/ui/separator';
 import { ShoppingCart, Package, ChefHat, User, CreditCard } from 'lucide-react';
 import { usePersonalCart, useRecipeUserCarts } from '@/hooks/useSupabaseCart';
 import { formatPrice } from '@/lib/firestore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const MainCartView = () => {
   const { personalCart, personalCartItems } = usePersonalCart();
   const { recipeCarts } = useRecipeUserCarts();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const personalCartTotal = personalCartItems.reduce((sum, item) => 
     sum + ((item.products?.price || 0) * item.quantity), 0
@@ -45,11 +46,17 @@ const MainCartView = () => {
   ];
 
   const handleViewCartDetail = (cartType: string, cartId: string) => {
+    // Mettre à jour les paramètres de recherche pour changer d'onglet
+    const newSearchParams = new URLSearchParams(searchParams);
+    
     if (cartType === 'personal') {
-      navigate('/panier?tab=personal');
+      newSearchParams.set('tab', 'personal');
     } else if (cartType === 'recipe') {
-      navigate('/panier?tab=recipe');
+      newSearchParams.set('tab', 'recipe');
     }
+    
+    // Naviguer vers la page panier avec le bon onglet
+    navigate(`/panier?${newSearchParams.toString()}`);
   };
 
   if (allCarts.length === 0) {
@@ -60,7 +67,7 @@ const MainCartView = () => {
             <ShoppingCart className="h-16 w-16 mx-auto text-gray-400 mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Votre panier est vide</h3>
             <p className="text-gray-600 mb-6">Ajoutez des produits ou créez des paniers recette pour commencer</p>
-            <div className="flex gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 onClick={() => navigate('/produits')}
                 className="bg-orange-500 hover:bg-orange-600"
@@ -91,14 +98,14 @@ const MainCartView = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {allCarts.map((cart) => (
-            <div key={cart.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg">
+            <div key={cart.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg bg-gray-50 gap-4">
+              <div className="flex items-center space-x-4 flex-1">
+                <div className="flex items-center justify-center w-12 h-12 bg-orange-100 rounded-lg flex-shrink-0">
                   {cart.icon}
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-medium">{cart.name}</h3>
-                  <div className="flex items-center space-x-2 mt-1">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium truncate">{cart.name}</h3>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
                     <Badge variant="outline" className="text-xs">
                       {cart.type === 'personal' ? 'Personnel' : 'Recette'}
                     </Badge>
@@ -115,6 +122,7 @@ const MainCartView = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => handleViewCartDetail(cart.type, cart.id)}
+                className="w-full sm:w-auto"
               >
                 Voir le détail
               </Button>
